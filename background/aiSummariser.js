@@ -53,7 +53,7 @@ export async function summarise(workEvents) {
 }
 
 // Sends the prompt to Gemini and returns the raw response
-function callGemini(prompt) {
+function callGemini(prompt, schema = SCHEMA) {
   return fetch(ENDPOINT, {
     method: "POST",
     headers: {
@@ -64,12 +64,53 @@ function callGemini(prompt) {
       contents: [{ role: "user", parts: [{ text: prompt }] }],
       generationConfig: {
         responseMimeType: "application/json",
-        responseSchema: SCHEMA, // forces the exact JSON shape
+        responseSchema: schema, // forces the exact JSON shape
         temperature: 0.3,
         maxOutputTokens: 1000, // room for the model's thinking too
       },
     }),
   });
+}
+
+const POINTS_SCHEMA = {
+  type: "OBJECT",
+  properties: { points: { type: "ARRAY", items: { type: "STRING" } } },
+  required: ["points"],
+};
+
+// Gives 5 detailed points about one page, for the card's "Expand points" button
+export async function expandPoints(event) {
+  if (!GEMINI_API_KEY || !event) return null;
+
+  const prompt = `Someone was reading this page and got distracted. Help them remember it.
+
+Page: "${event.title}" (${event.url})
+${event.section ? `Section they were in: "${event.section}"\n` : ""}${event.lastParagraph ? `Paragraph they stopped at: "${event.lastParagraph}"\n` : ""}
+What they read just before leaving:
+${event.readText || (event.text || "").slice(0, MAX_TEXT_CHARS * 2)}
+
+Reply ONLY with JSON: {"points": ["...", "..."]}
+Rules:
+- 5 points, each one clear sentence under 25 words.
+- Focus on what they read just before leaving, especially near where they stopped.
+- Use specific facts, names and numbers from the text. Never invent anything.`;
+
+  try {
+    let res = await callGemini(prompt, POINTS_SCHEMA);
+    if (res.status === 503 || res.status === 500) {
+      await new Promise((r) => setTimeout(r, 1500));
+      res = await callGemini(prompt, POINTS_SCHEMA);
+    }
+    if (!res.ok) {
+      console.warn("Gemini error", res.status, await res.text());
+      return null;
+    }
+    const parsed = extractJson(await res.json());
+    return Array.isArray(parsed?.points) ? parsed.points.slice(0, 5).map(String) : null;
+  } catch (err) {
+    console.warn("Expand points failed", err);
+    return null;
+  }
 }
 
 // Turns the work events into the text prompt for Gemini
