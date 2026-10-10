@@ -30,6 +30,7 @@
     const page = readPage();
     // sendMessage throws synchronously if the extension was reloaded; ignore it
     try {
+      if (!chrome.runtime || !chrome.runtime.id) return; // extension was reloaded
       chrome.runtime.sendMessage({ action: "pageContent", ...page }).catch(() => {});
     } catch (e) {}
   }

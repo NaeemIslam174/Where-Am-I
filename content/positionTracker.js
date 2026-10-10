@@ -24,25 +24,42 @@
     };
   }
 
+  // After the extension is reloaded, old copies of this script lose their connection.
+  // Detect that and stop quietly instead of throwing on every scroll.
+  function alive() {
+    try {
+      return !!(chrome.runtime && chrome.runtime.id);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function shutDown() {
+    window.removeEventListener("scroll", onScroll);
+    document.removeEventListener("visibilitychange", onVisibility);
+  }
+
   function send() {
     timer = null;
-    // sendMessage throws synchronously if the extension was reloaded; ignore it
+    if (!alive()) return shutDown();
     try {
       chrome.runtime.sendMessage({ action: "scrollPosition", ...snapshot() }).catch(() => {});
-    } catch (e) {}
+    } catch (e) {
+      shutDown();
+    }
+  }
+
+  function onScroll() {
+    if (!timer) timer = setTimeout(send, THROTTLE_MS);
+  }
+
+  function onVisibility() {
+    if (document.visibilityState === "hidden") send();
   }
 
   // Content → background: { action: "scrollPosition", url, scroll, section }
-  window.addEventListener(
-    "scroll",
-    () => {
-      if (!timer) timer = setTimeout(send, THROTTLE_MS);
-    },
-    { passive: true }
-  );
+  window.addEventListener("scroll", onScroll, { passive: true });
 
   // Send once when the user leaves the tab so the last position is never lost.
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") send();
-  });
+  document.addEventListener("visibilitychange", onVisibility);
 })();
