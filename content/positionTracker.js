@@ -4,7 +4,7 @@
   const THROTTLE_MS = 1000;
   let timer = null;
 
-  // Nearest heading above the top of the viewport (the section being read).
+  // Last heading in the top 30% of the screen or above it (the section being read).
   function currentSection() {
     const headings = document.querySelectorAll("h1, h2, h3, h4");
     let section = "";
@@ -26,7 +26,10 @@
 
   function send() {
     timer = null;
-    chrome.runtime.sendMessage({ action: "scrollPosition", ...snapshot() }).catch(() => {});
+    if (!chrome.runtime?.id) return; // extension was reloaded; this old page can't send
+    try {
+      chrome.runtime.sendMessage({ action: "scrollPosition", ...snapshot() }).catch(() => {});
+    } catch {} // extension was reloaded; ignore
   }
 
   // Content → background: { action: "scrollPosition", url, scroll, section }
@@ -42,4 +45,6 @@
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") send();
   });
+
+  send(); // send once on load, in case the user never scrolls
 })();

@@ -17,5 +17,5 @@ export const STORAGE_KEYS = {
 export const DEFAULT_SETTINGS = {
   paused: false,
   distractions: DEFAULT_DISTRACTIONS,
-  thresholdMs: 30 * 1000, // 30s for demo, 2 mins for real use
+  thresholdMs: 10 * 1000, // 30s for demo, 2 mins for real use
 };
