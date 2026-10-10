@@ -1,5 +1,5 @@
 import { addEvent } from "./sessionLog.js";
-
+import { classifyPage } from "./classifier.js";
 
 chrome.tabs.onActivated.addListener(async (activeInfo) => {
     try {
@@ -10,10 +10,11 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
             tabId: tab.id,
             url: tab.url,
             title: tab.title,
-            time: Date.now()
+            time: Date.now(),
+            category: classifyPage(tab.url)
         });
 
-        console.log("Tab switch saved:", tab.title);
+        console.log("Tab switch saved:", tab.title, classifyPage(tab.url));
     } catch (error) {
         console.error("Failed to save tab switch:", error);
     }
@@ -21,15 +22,20 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
 
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     if (changeInfo.status === "complete") {
-        await addEvent({
-            type: "pageLoad",
-            tabId: tabId,
-            url: tab.url,
-            title: tab.title,
-            time: Date.now()
-        });
+        try {
+            await addEvent({
+                type: "pageLoad",
+                tabId: tabId,
+                url: tab.url,
+                title: tab.title,
+                time: Date.now(),
+                category: classifyPage(tab.url)
+            });
 
-        console.log("Page load saved:", tab.url);
+            console.log("Page load saved:", tab.url);
+        } catch (error) {
+            console.error("Failed to save page load:", error);
+        }
     }
 });
 
