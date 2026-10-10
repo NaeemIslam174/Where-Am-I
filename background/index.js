@@ -2,9 +2,10 @@
 import { checkForDrift } from "./driftDetector.js";
 import { summarise } from "./aiSummariser.js";
 import { getSettings } from "../shared/settings.js";
-import "./tabTracker.js"; // Person 1: starts tab tracking
+import { setActivityCallback } from "./tabTracker.js";
 
 console.log("Background loaded");
+setActivityCallback(maybeShowCard); // tracker calls this after every event
 
 // Runs the drift check and shows the card if the user just came back
 export async function maybeShowCard(events) {

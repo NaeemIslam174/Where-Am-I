@@ -1,5 +1,8 @@
 let writeQueue = Promise.resolve();
 
+const MAX_TEXT_CHARS = 1500; // keeps storage small
+const sameUrl = (a, b) => !!a && !!b && a.split("#")[0] === b.split("#")[0];
+
 export function addEvent(event) {
     const operation = writeQueue.then(async () => {
         const { events = [] } = await chrome.storage.local.get("events");
@@ -11,6 +14,31 @@ export function addEvent(event) {
 
     writeQueue = operation.catch((error) => {
         console.error("Failed to store event:", error);
+    });
+
+    return operation;
+}
+
+// Adds page details (text, section, scroll) to the latest event for that tab and page
+export function updateLatestForTab(tabId, url, fields) {
+    const operation = writeQueue.then(async () => {
+        const { events = [] } = await chrome.storage.local.get("events");
+
+        for (let i = events.length - 1; i >= 0; i--) {
+            if (events[i].tabId !== tabId) continue;
+            if (!sameUrl(events[i].url, url)) return; // tab has moved on to another page
+
+            for (const [key, value] of Object.entries(fields)) {
+                if (value === undefined) continue;
+                events[i][key] = key === "text" ? String(value).slice(0, MAX_TEXT_CHARS) : value;
+            }
+            await chrome.storage.local.set({ events });
+            return;
+        }
+    });
+
+    writeQueue = operation.catch(error => {
+        console.error("Failed to update event:", error);
     });
 
     return operation;

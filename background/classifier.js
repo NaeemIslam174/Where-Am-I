@@ -1,16 +1,17 @@
 import { DEFAULT_DISTRACTIONS } from "../shared/constants.js";
 
-export function classifyPage(url) {
+// Labels a URL as "work", "distraction", or "other" (non-web pages like chrome://)
+export function classifyPage(url, distractions = DEFAULT_DISTRACTIONS) {
     try {
-        const hostname = new URL(url).hostname;
+        const { protocol, hostname } = new URL(url);
+        if (protocol !== "http:" && protocol !== "https:") return "other";
 
-        const isDistraction = DEFAULT_DISTRACTIONS.some(domain =>
+        const isDistraction = distractions.some(domain =>
             hostname === domain || hostname.endsWith("." + domain)
         );
 
         return isDistraction ? "distraction" : "work";
     } catch {
-        return "work";
+        return "other"; // empty or invalid URL
     }
 }
-

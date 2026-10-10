@@ -9,17 +9,22 @@
       position: fixed;
       bottom: 24px;
       right: 24px;
-      width: 320px;
+      width: 261px;
+      min-height: 340px; /* grows if the AI text is long */
       box-sizing: border-box;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
       overflow: hidden;
-      background: linear-gradient(180deg, #e4e4e4 0%, #c6c6c6 100%);
+      background: linear-gradient(180deg, #fff 0%, #999 100%);
       color: #2b2b2b;
-      border: 4px solid #f4f4f4;
-      border-radius: 24px;
+      border: 2px solid #fff;
+      border-radius: 16px;
       box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
-      padding: 22px 22px 20px;
       font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
-      font-size: 14px;
+      font-size: 13px;
       line-height: 1.4;
       z-index: 2147483647;
       opacity: 0;
@@ -32,17 +37,18 @@
       inset: 0;
       background-image: var(--pattern);
       background-size: 260px auto;
-      opacity: 0.07;
+      opacity: 0.1;
+      mix-blend-mode: multiply; /* only the dark marks show, white parts disappear */
       pointer-events: none;
     }
     .card > * { position: relative; } /* keep content above the pattern */
     .card.show { opacity: 1; transform: translateY(0); }
-    .header { text-align: center; margin-bottom: 14px; }
-    .title { font-weight: 700; font-size: 24px; color: #3a3a3a; letter-spacing: -0.01em; }
+    .header { width: 100%; text-align: center; padding-top: 6px; }
+    .title { font-weight: 700; font-size: 22px; color: #3a3a3a; letter-spacing: -0.01em; }
     .close {
       position: absolute;
-      top: -10px;
-      right: -10px;
+      top: -4px;
+      right: -4px;
       width: 32px;
       height: 32px;
       border: none;
@@ -54,14 +60,16 @@
     }
     .close:hover { background: rgba(255, 255, 255, 0.5); }
     .row {
-      margin: 8px 0;
-      padding: 10px 12px;
+      width: 100%;
+      box-sizing: border-box;
+      margin: 0;
+      padding: 8px 10px;
       background: rgba(255, 255, 255, 0.55);
       border-radius: 12px;
     }
     .label { font-weight: 700; color: #5a5a5a; font-size: 12px; margin-bottom: 2px; }
-    .actions { margin-top: 14px; display: flex; gap: 8px; }
-    .btn { border: none; border-radius: 12px; height: 38px; padding: 0 16px; cursor: pointer; font-size: 14px; font-weight: 600; font-family: inherit; }
+    .actions { width: 100%; margin-top: auto; display: flex; gap: 8px; } /* buttons sit at the bottom */
+    .btn { border: none; border-radius: 10px; height: 36px; padding: 0 14px; cursor: pointer; font-size: 14px; font-weight: 600; font-family: inherit; }
     .primary { flex: 1; background: #3a3a3a; color: #fff; }
     .primary:hover { background: #2b2b2b; }
     .secondary { background: rgba(255, 255, 255, 0.7); color: #3a3a3a; }
@@ -89,7 +97,7 @@
 
     const card = document.createElement("div");
     card.className = "card";
-    card.style.setProperty("--pattern", `url(${chrome.runtime.getURL("assets/question-marks.jpg")})`);
+    card.style.setProperty("--pattern", `url(${chrome.runtime.getURL("assets/QuestionMarks.jpg")})`);
     card.innerHTML = `
       <div class="header">
         <span class="title">Where Was I?</span>
