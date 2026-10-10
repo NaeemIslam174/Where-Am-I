@@ -7,6 +7,8 @@ export const DEFAULT_DISTRACTIONS = [
   "instagram.com",
   "x.com",
   "netflix.com",
+  "roblox.com",
+  "discord.com"
 ];
 
 export const STORAGE_KEYS = {
