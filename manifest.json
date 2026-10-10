@@ -21,7 +21,6 @@
         "content/positionTracker.js",
         "content/card.js"
       ],
-      "css": ["content/card.css"],
       "run_at": "document_idle"
     }
   ],
