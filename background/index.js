@@ -1,16 +1,36 @@
-<<<<<<< HEAD
-
-console.log("Background service worker running!");
-
-import "./tabTracker.js";
-console.log("Background loaded");
-=======
 // background/index.js
 import { checkForDrift } from "./driftDetector.js";
 import { summarise } from "./aiSummariser.js";
 import { getSettings } from "../shared/settings.js";
+import "./tabTracker.js";
+import { addEvent, getRecentEvents } from "./sessionLog.js";
+import { classifyPage } from "./classifier.js";
 
 console.log("Background loaded");
+
+// Content scripts → log: page text (pageReader.js) and scroll/section (positionTracker.js)
+chrome.runtime.onMessage.addListener((msg, sender) => {
+  if (!msg || !sender.tab) return;
+  if (msg.action !== "pageContent" && msg.action !== "scrollPosition") return;
+
+  addEvent({
+    type: msg.action,
+    tabId: sender.tab.id,
+    url: msg.url,
+    title: msg.title || sender.tab.title,
+    text: msg.text,
+    section: msg.section,
+    scroll: msg.scroll,
+    time: Date.now(),
+    category: classifyPage(msg.url),
+  });
+});
+
+// When the user switches tabs, check whether they just came back from a distraction.
+// Short delay so tabTracker.js has logged the switch first.
+chrome.tabs.onActivated.addListener(() => {
+  setTimeout(async () => maybeShowCard(await getRecentEvents()), 500);
+});
 
 // Runs the drift check and shows the card if the user just came back
 export async function maybeShowCard(events) {
@@ -87,4 +107,3 @@ self.testDrift = async function (delayMs = 3000) {
   await maybeShowCard(fakeEvents);
   console.log("testDrift done");
 };
->>>>>>> c52fb7899dc140bd547e0d66e8f183561164df1d

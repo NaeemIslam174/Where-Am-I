@@ -1,13 +1,3 @@
-<<<<<<< HEAD
-export const DISTRACTION_DOMAINS = [
-    "youtube.com",
-    "reddit.com",
-    "tiktok.com",
-    "instagram.com",
-    "x.com",
-    "facebook.com"
-];
-=======
 // shared/constants.js — values both halves use (agree changes with Person 1)
 
 export const DEFAULT_DISTRACTIONS = [
@@ -17,6 +7,7 @@ export const DEFAULT_DISTRACTIONS = [
   "instagram.com",
   "x.com",
   "netflix.com",
+  "facebook.com",
 ];
 
 export const STORAGE_KEYS = {
@@ -29,4 +20,3 @@ export const DEFAULT_SETTINGS = {
   distractions: DEFAULT_DISTRACTIONS,
   thresholdMs: 30 * 1000, // 30s for demo, 2 mins for real use
 };
->>>>>>> c52fb7899dc140bd547e0d66e8f183561164df1d
