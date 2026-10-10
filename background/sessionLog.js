@@ -48,3 +48,18 @@ export async function clearOld() {
 
     return operation;
 }
+
+export async function getRecentEvents(minutes = 30) {
+    await writeQueue;
+
+    const { events = [] } = await chrome.storage.local.get("events");
+
+    const cutoff = Date.now() - minutes * 60 * 1000;
+
+    return events
+        .filter(event =>
+            event.time >= cutoff &&
+            (event.category === "work" || event.category === "distraction")
+        )
+        .sort((a, b) => a.time - b.time);
+}

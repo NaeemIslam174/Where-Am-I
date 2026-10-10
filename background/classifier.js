@@ -1,10 +1,10 @@
-import { DISTRACTION_DOMAINS } from "../shared/constants.js";
+import { DEFAULT_DISTRACTIONS } from "../shared/constants.js";
 
 export function classifyPage(url) {
     try {
         const hostname = new URL(url).hostname;
 
-        const isDistraction = DISTRACTION_DOMAINS.some(domain =>
+        const isDistraction = DEFAULT_DISTRACTIONS.some(domain =>
             hostname === domain || hostname.endsWith("." + domain)
         );
 
@@ -13,3 +13,4 @@ export function classifyPage(url) {
         return "work";
     }
 }
+
