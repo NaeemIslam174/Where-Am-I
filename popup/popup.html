@@ -1,1 +1,49 @@
-<h1>Where Was I?</h1>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Where Was I?</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="header">
+    <div class="logo" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"></polyline><path d="M20 20v-7a4 4 0 0 0-4-4H4"></path></svg>
+    </div>
+    <div>
+      <h1>Where Was I?</h1>
+      <p class="status"><span class="dot" id="statusDot"></span><span id="statusText">Tracking</span></p>
+    </div>
+  </header>
+
+  <main>
+    <section class="pause-row">
+      <div>
+        <span class="row-title" id="pauseLabel">Pause tracking</span>
+        <p class="hint">No logging and no cards while paused</p>
+      </div>
+      <button id="pauseToggle" class="switch" role="switch" aria-checked="false" aria-labelledby="pauseLabel">
+        <span class="knob"></span>
+      </button>
+    </section>
+
+    <section>
+      <h2>Distraction sites</h2>
+      <ul id="siteList" class="chips"></ul>
+      <form id="addForm" class="add-row">
+        <label for="siteInput" class="visually-hidden">Add a distraction site</label>
+        <input id="siteInput" type="text" placeholder="Add a site, e.g. x.com" autocomplete="off">
+        <button type="submit" class="btn-secondary">Add</button>
+      </form>
+      <p id="siteError" class="error" role="alert"></p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span class="hint">Everything stays on this device.</span>
+    <button id="clearBtn" class="btn-danger">Clear history</button>
+  </footer>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

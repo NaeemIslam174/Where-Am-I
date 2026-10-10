@@ -1,12 +1,16 @@
 // background/index.js
 import { checkForDrift } from "./driftDetector.js";
 import { summarise } from "./aiSummariser.js";
+import { getSettings } from "../shared/settings.js";
 
 console.log("Background loaded");
 
 // Runs the drift check and shows the card if the user just came back
 export async function maybeShowCard(events) {
-  const result = checkForDrift(events);
+  const settings = await getSettings();
+  if (settings.paused) return; // user paused tracking
+
+  const result = checkForDrift(events, settings.thresholdMs);
   if (!result.show) return;
 
   const fallback = buildFallbackSummary(result.workEvents);
