@@ -26,7 +26,10 @@
 
   function send() {
     timer = null;
-    chrome.runtime.sendMessage({ action: "scrollPosition", ...snapshot() }).catch(() => {});
+    // sendMessage throws synchronously if the extension was reloaded; ignore it
+    try {
+      chrome.runtime.sendMessage({ action: "scrollPosition", ...snapshot() }).catch(() => {});
+    } catch (e) {}
   }
 
   // Content → background: { action: "scrollPosition", url, scroll, section }

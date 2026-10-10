@@ -28,7 +28,10 @@
 
   function sendPage() {
     const page = readPage();
-    chrome.runtime.sendMessage({ action: "pageContent", ...page }).catch(() => {});
+    // sendMessage throws synchronously if the extension was reloaded; ignore it
+    try {
+      chrome.runtime.sendMessage({ action: "pageContent", ...page }).catch(() => {});
+    } catch (e) {}
   }
 
   // Content → background: { action: "pageContent", url, title, text }
