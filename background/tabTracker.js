@@ -27,7 +27,8 @@ async function logPage(type, tab) {
 
     const extra = pageData.get(tab.id);
     const details = extra && sameUrl(extra.url, tab.url)
-        ? { text: extra.text, section: extra.section, scroll: extra.scroll }
+        ? { text: extra.text, section: extra.section, scroll: extra.scroll,
+            lastParagraph: extra.lastParagraph, readText: extra.readText }
         : {};
 
     await addEvent({
@@ -79,7 +80,9 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
     if (tabId === undefined || !msg?.url) return;
 
     let fields;
-    if (msg.action === "scrollPosition") fields = { scroll: msg.scroll, section: msg.section };
+    if (msg.action === "scrollPosition") {
+        fields = { scroll: msg.scroll, section: msg.section, lastParagraph: msg.lastParagraph, readText: msg.readText };
+    }
     else if (msg.action === "pageContent") fields = { text: msg.text };
     else return;
 

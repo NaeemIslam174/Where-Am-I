@@ -17,7 +17,15 @@ export async function maybeShowCard(events) {
 
   const fallback = buildFallbackSummary(result.workEvents);
   const ai = await summarise(result.workEvents);
-  const summary = ai ? { ...ai, scroll: fallback.scroll } : fallback;
+
+  const lastWork = result.workEvents[result.workEvents.length - 1];
+  const extras = {
+    awayMs: result.distractionMs,
+    sourceTitle: lastWork.title,
+    sourceUrl: lastWork.url,
+    stopQuote: lastWork.lastParagraph || "",
+  };
+  const summary = ai ? { ...ai, scroll: fallback.scroll, ...extras } : { ...fallback, ...extras };
 
   await sendCardToTab(result.returnEvent.tabId, summary);
 }

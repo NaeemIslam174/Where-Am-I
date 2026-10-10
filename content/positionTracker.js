@@ -16,11 +16,45 @@
     return section.slice(0, 120);
   }
 
+  const BLOCKS = "p, li, h1, h2, h3, h4, blockquote, pre, td";
+  const SCREENS_BACK = 3; // how far up to read from where they stopped
+  const MAX_READ_CHARS = 3000;
+
+  // The paragraph at the top of the screen: exactly where they stopped
+  function lastParagraph() {
+    for (const el of document.querySelectorAll(BLOCKS)) {
+      const r = el.getBoundingClientRect();
+      if (r.bottom > 0 && r.height > 0) {
+        const t = el.textContent.replace(/\s+/g, " ").trim();
+        if (t.length > 20) return t.slice(0, 300);
+      }
+    }
+    return "";
+  }
+
+  // Text from 3 screens above the current view down to the bottom of the screen
+  function recentlyReadText() {
+    const from = window.scrollY - SCREENS_BACK * window.innerHeight;
+    const to = window.scrollY + window.innerHeight;
+    const parts = [];
+    for (const el of document.querySelectorAll(BLOCKS)) {
+      if (el.closest("nav, header, footer, aside")) continue; // skip menus
+      const r = el.getBoundingClientRect();
+      const top = r.top + window.scrollY;
+      if (r.height === 0 || top < from || top > to) continue;
+      const t = el.textContent.replace(/\s+/g, " ").trim();
+      if (t) parts.push(t);
+    }
+    return parts.join("\n").slice(-MAX_READ_CHARS); // keep the part nearest where they stopped
+  }
+
   function snapshot() {
     return {
       url: location.href,
       scroll: Math.round(window.scrollY),
       section: currentSection(),
+      lastParagraph: lastParagraph(),
+      readText: recentlyReadText(),
     };
   }
 
@@ -32,7 +66,7 @@
     } catch {} // extension was reloaded; ignore
   }
 
-  // Content → background: { action: "scrollPosition", url, scroll, section }
+  // Content → background: { action: "scrollPosition", url, scroll, section, lastParagraph, readText }
   window.addEventListener(
     "scroll",
     () => {

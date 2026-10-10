@@ -45,6 +45,11 @@
     .card.show { opacity: 1; transform: translateY(0); }
     .header { width: 100%; text-align: center; padding-top: 6px; }
     .title { font-weight: 700; font-size: 22px; color: #3a3a3a; letter-spacing: -0.01em; }
+    .away { display: block; font-size: 12px; color: #5a5a5a; margin-top: 2px; }
+    .points { margin: 2px 0 0; padding-left: 18px; }
+    .points li { margin: 2px 0; }
+    .quote { margin-top: 4px; font-style: italic; color: #4a4a4a; font-size: 12px; border-left: 3px solid #8a8a8a; padding-left: 8px; }
+    .source { color: #2b2b2b; font-weight: 600; text-decoration: underline; word-break: break-word; }
     .close {
       position: absolute;
       top: -4px;
@@ -78,6 +83,14 @@
     @media (prefers-reduced-motion: reduce) { .card { transition: none; } }
   `;
 
+  // Turns milliseconds into "45 seconds" or "4 minutes"
+  function formatAway(ms) {
+    const seconds = Math.round(ms / 1000);
+    if (seconds < 60) return `${seconds} seconds`;
+    const minutes = Math.round(seconds / 60);
+    return minutes === 1 ? "1 minute" : `${minutes} minutes`;
+  }
+
   // Removes the card if it's on the page
   function removeCard() {
     const existing = document.getElementById(CARD_ID);
@@ -85,7 +98,7 @@
   }
 
   // Draws the card with the given summary
-  function showCard({ doing, stoppedAt, nextStep, scroll }) {
+  function showCard({ doing, stoppedAt, nextStep, scroll, awayMs, keyPoints, sourceTitle, sourceUrl, stopQuote }) {
     removeCard();
 
     const host = document.createElement("div");
@@ -101,11 +114,14 @@
     card.innerHTML = `
       <div class="header">
         <span class="title">Where Was I?</span>
+        <span class="away"></span>
         <button class="close" aria-label="Dismiss">×</button>
       </div>
       <div class="row"><div class="label">You were</div><div class="doing"></div></div>
-      <div class="row"><div class="label">You stopped at</div><div class="stopped"></div></div>
+      <div class="row"><div class="label">You stopped at</div><div class="stopped"></div><div class="quote"></div></div>
+      <div class="row key-row"><div class="label">Key points</div><ul class="points"></ul></div>
       <div class="row"><div class="label">Next step</div><div class="next"></div></div>
+      <div class="row source-row"><div class="label">Page</div><a class="source"></a></div>
       <div class="actions">
         <button class="btn primary jump">Jump back</button>
         <button class="btn secondary dismiss">Got it</button>
@@ -117,8 +133,43 @@
     card.querySelector(".stopped").textContent = stoppedAt || "";
     card.querySelector(".next").textContent = nextStep || "";
 
+    // Exact spot they stopped, as a short quote
+    const quote = card.querySelector(".quote");
+    if (stopQuote) quote.textContent = `"${stopQuote.length > 140 ? stopQuote.slice(0, 140) + "…" : stopQuote}"`;
+    else quote.remove();
+
+    // Time away under the title
+    const away = card.querySelector(".away");
+    if (typeof awayMs === "number") away.textContent = `Welcome back, you were away ${formatAway(awayMs)}`;
+    else away.remove();
+
+    // Key points (AI only)
+    const points = card.querySelector(".points");
+    if (Array.isArray(keyPoints) && keyPoints.length) {
+      for (const point of keyPoints) {
+        const li = document.createElement("li");
+        li.textContent = point;
+        points.append(li);
+      }
+    } else {
+      card.querySelector(".key-row").remove();
+    }
+
+    // Link to the page they were on, only if it's a different page from this one
+    const samePage = !sourceUrl || sourceUrl.split("#")[0] === location.href.split("#")[0];
+    const source = card.querySelector(".source");
+    if (!samePage) {
+      source.textContent = sourceTitle || sourceUrl;
+      source.href = sourceUrl;
+    } else {
+      card.querySelector(".source-row").remove();
+    }
+
     const jumpBtn = card.querySelector(".jump");
-    if (typeof scroll === "number") {
+    if (!samePage) {
+      jumpBtn.textContent = "Go back";
+      jumpBtn.addEventListener("click", () => { location.href = sourceUrl; });
+    } else if (typeof scroll === "number") {
       jumpBtn.addEventListener("click", () => {
         window.scrollTo({ top: scroll, behavior: "smooth" });
         removeCard();
@@ -153,6 +204,9 @@
       doing: "Researching the causes of WW1 for your essay.",
       stoppedAt: "The section on the Triple Entente.",
       nextStep: "Look into the July Crisis.",
+      keyPoints: ["The Entente linked France, Russia and Britain.", "It was not a formal military alliance."],
+      awayMs: 240000,
+      stopQuote: "The Entente grew from the Franco-Russian Alliance of 1894 and the Entente Cordiale of 1904.",
       scroll: 0,
     });
   });

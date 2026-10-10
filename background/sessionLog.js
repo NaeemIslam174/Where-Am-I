@@ -1,6 +1,6 @@
 let writeQueue = Promise.resolve();
 
-const MAX_TEXT_CHARS = 1500; // keeps storage small
+const MAX_TEXT_CHARS = { text: 1500, readText: 3000, lastParagraph: 300 }; // keeps storage small
 const sameUrl = (a, b) => !!a && !!b && a.split("#")[0] === b.split("#")[0];
 
 export function addEvent(event) {
@@ -30,7 +30,10 @@ export function updateLatestForTab(tabId, url, fields) {
 
             for (const [key, value] of Object.entries(fields)) {
                 if (value === undefined) continue;
-                events[i][key] = key === "text" ? String(value).slice(0, MAX_TEXT_CHARS) : value;
+                const max = MAX_TEXT_CHARS[key];
+                if (!max) events[i][key] = value;
+                else if (key === "text") events[i][key] = String(value).slice(0, max); // start of the page
+                else events[i][key] = String(value).slice(-max); // end, nearest where they stopped
             }
             await chrome.storage.local.set({ events });
             return;
