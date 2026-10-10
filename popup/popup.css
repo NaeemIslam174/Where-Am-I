@@ -1,25 +1,45 @@
-/* popup/popup.css — matches the card (navy accent, white surface) */
+/* popup/popup.css — matches the card (grey gradient, question mark pattern) */
 :root {
-  --navy: #1f2a6b;
+  --navy: #3a3a3a; /* dark grey accent, same as the card */
   --ink: #1a1a2e;
   --muted: #5b6170;
-  --soft: #eef0f8;
-  --panel: #f3f4f8;
-  --line: #e6e8ef;
+  --soft: rgba(255, 255, 255, 0.7);
+  --panel: rgba(255, 255, 255, 0.55);
+  --line: rgba(255, 255, 255, 0.7);
   --red: #b3261e;
   --green: #1e8a4c;
 }
 
 * { box-sizing: border-box; }
 
+html { background: #ececec; } /* shows around the rounded edges */
+
 body {
   width: 340px;
-  margin: 0;
+  margin: 6px;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   font-size: 14px;
   color: var(--ink);
-  background: #fff;
+  background: linear-gradient(180deg, #fff 0%, #999 100%);
+  border: 2px solid #fff;
+  border-radius: 16px; /* same as the card */
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
 }
+
+body::before { /* faint question mark pattern, same as the card */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("../assets/QuestionMarks.jpg");
+  background-size: 260px auto;
+  opacity: 0.1;
+  mix-blend-mode: multiply; /* only the dark marks show, white parts disappear */
+  pointer-events: none;
+}
+
+header, main, footer { position: relative; } /* keep content above the pattern */
 
 .header {
   display: flex;
@@ -29,21 +49,12 @@ body {
   border-bottom: 1px solid var(--line);
 }
 
-.logo {
-  width: 36px;
-  height: 36px;
-  border-radius: 9px;
-  background: var(--navy);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
+.logo { width: 36px; height: 36px; flex-shrink: 0; }
 
-h1 { margin: 0; font-size: 16px; color: var(--navy); }
-h2 { margin: 0 0 10px; font-size: 13px; font-weight: 600; color: var(--muted); }
+h1 { margin: 0; font-size: 17px; font-weight: 700; color: #3a3a3a; }
+h2 { margin: 0 0 10px; font-size: 13px; font-weight: 700; color: #4a4a4a; }
 
-.status { margin: 2px 0 0; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.status { margin: 2px 0 0; font-size: 12px; color: #4a4a4a; display: flex; align-items: center; gap: 6px; }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
 .dot.paused { background: #9aa0ad; }
 
@@ -59,7 +70,7 @@ main { padding: 18px 20px; display: flex; flex-direction: column; gap: 20px; }
   border-radius: 12px;
 }
 .row-title { font-weight: 600; }
-.hint { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+.hint { margin: 2px 0 0; font-size: 12px; color: #4a4a4a; }
 
 /* Toggle switch */
 .switch {
@@ -110,7 +121,7 @@ main { padding: 18px 20px; display: flex; flex-direction: column; gap: 20px; }
   font-size: 15px;
   cursor: pointer;
 }
-.chip button:hover { background: #dde1ee; }
+.chip button:hover { background: #fff; }
 .empty { font-size: 13px; color: var(--muted); }
 
 .add-row { display: flex; gap: 8px; }
@@ -119,8 +130,9 @@ input {
   min-width: 0;
   height: 36px;
   padding: 0 12px;
-  border: 1px solid #d3d6e0;
+  border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 10px;
+  background: rgba(255, 255, 255, 0.85);
   font: inherit;
   font-size: 13px;
 }
@@ -154,7 +166,7 @@ input {
   font-weight: 600;
   cursor: pointer;
 }
-.btn-danger:hover { background: #fbeceb; }
+.btn-danger:hover { background: rgba(255, 255, 255, 0.6); }
 
 button:focus-visible, input:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; }
 

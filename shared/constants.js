@@ -7,13 +7,10 @@ export const DEFAULT_DISTRACTIONS = [
   "instagram.com",
   "x.com",
   "netflix.com",
-  "facebook.com",
-  "roblox.com",
-  "discord.com",
 ];
 
 export const STORAGE_KEYS = {
-  log: "sessionLog", // Person 1's session log
+  log: "events", // Person 1's session log
   settings: "settings",
 };
 

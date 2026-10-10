@@ -3,52 +3,9 @@ import { checkForDrift } from "./driftDetector.js";
 import { summarise } from "./aiSummariser.js";
 import { getSettings } from "../shared/settings.js";
 import { setActivityCallback } from "./tabTracker.js";
-import { addEvent } from "./sessionLog.js";
-import { classifyPage } from "./classifier.js";
 
 console.log("Background loaded");
-
-// Content scripts → log: page text (pageReader.js) and scroll/section (positionTracker.js)
-chrome.runtime.onMessage.addListener((msg, sender) => {
-  if (!msg || !sender.tab) return;
-  if (msg.action !== "pageContent" && msg.action !== "scrollPosition") return;
-
-  addEvent({
-    type: msg.action,
-    tabId: sender.tab.id,
-    url: msg.url,
-    title: msg.title || sender.tab.title,
-    text: msg.text,
-    section: msg.section,
-    scroll: msg.scroll,
-    time: Date.now(),
-    category: classifyPage(msg.url),
-  });
-});
-
-// Timeline for the drift check = tab switches and page loads only.
-// Page text / section / scroll from content scripts are attached to them, so a late
-// scroll message can't land between a distraction and the return and hide the drift.
-function buildTimeline(events) {
-  const latest = {}; // `${tabId}|${url}` → merged page details
-  for (const e of events) {
-    if (e.type !== "pageContent" && e.type !== "scrollPosition") continue;
-    const key = `${e.tabId}|${e.url}`;
-    latest[key] = {
-      ...latest[key],
-      ...(e.text !== undefined && { text: e.text }),
-      ...(e.section !== undefined && { section: e.section }),
-      ...(e.scroll !== undefined && { scroll: e.scroll }),
-    };
-  }
-
-  return events
-    .filter((e) => e.type === "tabSwitch" || e.type === "pageLoad")
-    .map((e) => ({ ...e, ...latest[`${e.tabId}|${e.url}`] }));
-}
-
-// tabTracker.js calls this after every tab switch
-setActivityCallback((events) => maybeShowCard(buildTimeline(events)));
+setActivityCallback(maybeShowCard); // tracker calls this after every event
 
 // Runs the drift check and shows the card if the user just came back
 export async function maybeShowCard(events) {
