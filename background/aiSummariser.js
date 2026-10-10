@@ -1,9 +1,20 @@
 // background/aiSummariser.js
 import { GEMINI_API_KEY } from "./secrets.js";
 
-const MODEL = "gemini-2.5-flash-lite"; // free model, check AI Studio if it errors
+const MODEL = "gemini-3.5-flash-lite"; // free model, check AI Studio if it errors
 const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 const MAX_TEXT_CHARS = 1500; // per page, keeps the prompt small
+
+// The exact shape we want back from Gemini
+const SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    doing: { type: "STRING" },
+    stoppedAt: { type: "STRING" },
+    nextStep: { type: "STRING" },
+  },
+  required: ["doing", "stoppedAt", "nextStep"],
+};
 
 // Sends recent work to Gemini and returns { doing, stoppedAt, nextStep } or null
 export async function summarise(workEvents) {
@@ -12,21 +23,11 @@ export async function summarise(workEvents) {
   const prompt = buildPrompt(workEvents);
 
   try {
-    const res = await fetch(ENDPOINT, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": GEMINI_API_KEY,
-      },
-      body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: {
-          responseMimeType: "application/json",
-          temperature: 0.3,
-          maxOutputTokens: 200,
-        },
-      }),
-    });
+    let res = await callGemini(prompt);
+    if (res.status === 503 || res.status === 500) {
+      await new Promise((r) => setTimeout(r, 1500)); // server busy, wait and retry once
+      res = await callGemini(prompt);
+    }
 
     if (!res.ok) {
       console.warn("Gemini error", res.status, await res.text());
@@ -34,9 +35,8 @@ export async function summarise(workEvents) {
     }
 
     const data = await res.json();
-    const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    const clean = raw.replace(/```json|```/g, "").trim();
-    const parsed = JSON.parse(clean);
+    const parsed = extractJson(data);
+    if (!parsed) return null;
 
     if (!parsed.doing || !parsed.stoppedAt || !parsed.nextStep) return null;
     return {
@@ -48,6 +48,26 @@ export async function summarise(workEvents) {
     console.warn("Summariser failed", err);
     return null; // offline, bad JSON, etc.
   }
+}
+
+// Sends the prompt to Gemini and returns the raw response
+function callGemini(prompt) {
+  return fetch(ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": GEMINI_API_KEY,
+    },
+    body: JSON.stringify({
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: SCHEMA, // forces the exact JSON shape
+        temperature: 0.3,
+        maxOutputTokens: 1000, // room for the model's thinking too
+      },
+    }),
+  });
 }
 
 // Turns the work events into the text prompt for Gemini
@@ -77,6 +97,28 @@ Rules:
 - "stoppedAt": the specific page or section they were last on.
 - "nextStep": the most likely next thing they were about to do, based on their searches and reading.
 - Be specific (name the topic), never generic.`;
+}
+
+// Pulls the JSON object out of Gemini's reply, or null
+function extractJson(data) {
+  const parts = data?.candidates?.[0]?.content?.parts || [];
+  const text = parts
+    .filter((p) => !p.thought) // skip thinking parts
+    .map((p) => p.text || "")
+    .join("");
+
+  const match = text.match(/\{[\s\S]*\}/); // first { to last }
+  if (!match) {
+    console.warn("No JSON in Gemini reply:", text);
+    return null;
+  }
+
+  try {
+    return JSON.parse(match[0]);
+  } catch {
+    console.warn("Bad JSON in Gemini reply:", text);
+    return null;
+  }
 }
 
 // Gets the search text from a Google search URL, or null

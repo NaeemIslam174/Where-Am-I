@@ -34,12 +34,21 @@ function buildFallbackSummary(workEvents) {
   };
 }
 
-// Sends the card message to a tab, ignoring tabs that can't show it
+// Sends the card to a tab, injecting card.js first if the tab doesn't have it
 async function sendCardToTab(tabId, summary) {
+  const message = { action: "showCard", ...summary };
+
   try {
-    await chrome.tabs.sendMessage(tabId, { action: "showCard", ...summary });
+    await chrome.tabs.sendMessage(tabId, message);
+    return; // card.js was already there
+  } catch {}
+
+  try {
+    // tab was opened before the extension loaded, so add card.js now
+    await chrome.scripting.executeScript({ target: { tabId }, files: ["content/card.js"] });
+    await chrome.tabs.sendMessage(tabId, message);
   } catch (err) {
-    console.warn("Could not show card on tab", tabId, err.message);
+    console.warn("Could not show card on tab", tabId, err.message); // e.g. chrome:// pages
   }
 }
 
@@ -48,8 +57,9 @@ self.testDrift = async function (delayMs = 3000) {
   console.log(`Switch to a web page tab — card in ${delayMs / 1000}s...`);
   await new Promise((r) => setTimeout(r, delayMs));
 
-  const [tab] = await chrome.tabs.query({ active: true, windowType: "normal" });
-  if (!tab) return console.warn("No active normal tab found");
+  const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+  if (!tab) return console.warn("No active tab found");
+  console.log("Testing on:", tab.url); // should be your Wikipedia page
 
   const now = Date.now();
   const fakeEvents = [
