@@ -2,8 +2,8 @@
 import { checkForDrift } from "./driftDetector.js";
 import { summarise } from "./aiSummariser.js";
 import { getSettings } from "../shared/settings.js";
-import "./tabTracker.js";
-import { addEvent, getRecentEvents } from "./sessionLog.js";
+import { setActivityCallback } from "./tabTracker.js";
+import { addEvent } from "./sessionLog.js";
 import { classifyPage } from "./classifier.js";
 
 console.log("Background loaded");
@@ -26,11 +26,29 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
   });
 });
 
-// When the user switches tabs, check whether they just came back from a distraction.
-// Short delay so tabTracker.js has logged the switch first.
-chrome.tabs.onActivated.addListener(() => {
-  setTimeout(async () => maybeShowCard(await getRecentEvents()), 500);
-});
+// Timeline for the drift check = tab switches and page loads only.
+// Page text / section / scroll from content scripts are attached to them, so a late
+// scroll message can't land between a distraction and the return and hide the drift.
+function buildTimeline(events) {
+  const latest = {}; // `${tabId}|${url}` → merged page details
+  for (const e of events) {
+    if (e.type !== "pageContent" && e.type !== "scrollPosition") continue;
+    const key = `${e.tabId}|${e.url}`;
+    latest[key] = {
+      ...latest[key],
+      ...(e.text !== undefined && { text: e.text }),
+      ...(e.section !== undefined && { section: e.section }),
+      ...(e.scroll !== undefined && { scroll: e.scroll }),
+    };
+  }
+
+  return events
+    .filter((e) => e.type === "tabSwitch" || e.type === "pageLoad")
+    .map((e) => ({ ...e, ...latest[`${e.tabId}|${e.url}`] }));
+}
+
+// tabTracker.js calls this after every tab switch
+setActivityCallback((events) => maybeShowCard(buildTimeline(events)));
 
 // Runs the drift check and shows the card if the user just came back
 export async function maybeShowCard(events) {
