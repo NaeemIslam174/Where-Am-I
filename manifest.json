@@ -3,18 +3,25 @@
   "name": "Where Was I?",
   "version": "0.1.0",
   "description": "Notices when you get distracted and, when you come back, tells you exactly where you left off.",
-
-  "permissions": ["tabs", "storage", "scripting", "alarms"],
-  "host_permissions": ["<all_urls>"],
-
+  "permissions": [
+    "tabs",
+    "storage",
+    "scripting",
+    "alarms"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "background": {
     "service_worker": "background/index.js",
     "type": "module"
   },
-
   "content_scripts": [
     {
-      "matches": ["http://*/*", "https://*/*"],
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
       "js": [
         "lib/Readability.js",
         "content/pageReader.js",
@@ -24,20 +31,31 @@
       "run_at": "document_idle"
     }
   ],
-
-  "icons": {
-    "16": "icons/icon16.png",
-    "32": "icons/icon32.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
-  },
-
   "action": {
     "default_popup": "popup/popup.html",
     "default_title": "Where Was I?",
     "default_icon": {
       "16": "icons/icon16.png",
-      "32": "icons/icon32.png"
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
     }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "assets/question-marks.jpg"
+      ],
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ]
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
   }
 }
