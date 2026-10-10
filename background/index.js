@@ -1,3 +1,10 @@
+<<<<<<< HEAD
+
+console.log("Background service worker running!");
+
+import "./tabTracker.js";
+console.log("Background loaded");
+=======
 // background/index.js
 import { checkForDrift } from "./driftDetector.js";
 import { summarise } from "./aiSummariser.js";
@@ -80,3 +87,4 @@ self.testDrift = async function (delayMs = 3000) {
   await maybeShowCard(fakeEvents);
   console.log("testDrift done");
 };
+>>>>>>> c52fb7899dc140bd547e0d66e8f183561164df1d
